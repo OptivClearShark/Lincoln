@@ -1,6 +1,7 @@
 resource "aws_instance" "splunk" {
   ami                     = data.aws_ami.splunk_ami.id
   instance_type           = var.instance_type
+  count                   = 1
   subnet_id               = aws_subnet.private[0].id
   vpc_security_group_ids  = [aws_security_group.splunk_instance.id]
   iam_instance_profile    = aws_iam_instance_profile.ssm_profile.name
@@ -14,7 +15,8 @@ resource "aws_instance" "splunk" {
   }
 
   user_data = templatefile("${path.module}/user_data.sh", {
-    region = var.aws_region
+    region   = var.aws_region,
+    hostname = "${var.project_name}-aio-${format("%02d", count.index + 1)}"
   })
 
   metadata_options {
@@ -29,6 +31,6 @@ resource "aws_instance" "splunk" {
   }
 
   tags = {
-    Name = "${var.project_name}-splunk-instance"
+    Name = "${var.project_name}-aio-${format("%02d", count.index + 1)}"
   }
 }

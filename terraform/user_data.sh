@@ -6,6 +6,13 @@ exec 2>&1
 
 echo "Starting user data script execution at $(date)"
 
+# Set hostname from template input if provided
+HOSTNAME_TO_SET="${hostname}"
+if [ -n "$HOSTNAME_TO_SET" ]; then
+  echo "Setting hostname to $HOSTNAME_TO_SET"
+  hostnamectl set-hostname "$HOSTNAME_TO_SET"
+fi
+
 # Ensure SSM agent is running (should already be installed via Packer)
 echo "Ensuring SSM agent is running..."
 systemctl start amazon-ssm-agent

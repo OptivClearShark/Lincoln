@@ -62,6 +62,23 @@ source "amazon-ebs" "al2023-splunk" {
   run_tags        = local.default_tags
   run_volume_tags = local.default_tags
 
+  # Ensure 16 GB root volume on the build instance and resulting AMI
+  launch_block_device_mappings {
+    device_name           = "/dev/xvda"
+    volume_size           = 32
+    volume_type           = "gp3"
+    delete_on_termination = true
+    encrypted             = true
+  }
+
+  ami_block_device_mappings {
+    device_name           = "/dev/xvda"
+    volume_size           = 128
+    volume_type           = "gp3"
+    delete_on_termination = true
+    encrypted             = true
+  }
+
 }
 
 build {
@@ -70,115 +87,13 @@ build {
     "source.amazon-ebs.al2023-splunk"
   ]
 
-  # Set timezone to UTC
+  # Run consolidated setup script
   provisioner "shell" {
-    inline = [
-      "sudo timedatectl set-timezone UTC"
-    ]
-  }
-
-  # Update system and install prerequisites
-  provisioner "shell" {
-    inline = [
-      "sudo dnf update -y",
-      "sudo dnf install -y wget unzip",
-      "echo 'System updated and prerequisites installed'"
-    ]
-  }
-
-  # Install and configure SSM agent
-  provisioner "shell" {
-    inline = [
-      "echo 'Installing SSM Agent...'",
-      "sudo dnf install -y amazon-ssm-agent",
-      "sudo systemctl enable amazon-ssm-agent",
-      "sudo systemctl start amazon-ssm-agent",
-      "echo 'SSM Agent installed and enabled'"
-    ]
-  }
-
-  # Create splunk user and directories
-  #provisioner "shell" {
-  #  inline = [
-  #    "echo 'Creating splunk user and directories...'",
-  #    "sudo useradd -r -m -U -d /opt/splunk -s /bin/bash splunk",
-  #    "sudo mkdir -p /opt/splunk",
-  #    "sudo chown splunk:splunk /opt/splunk"
-  #  ]
-  #}
-
-  # Download and install Splunk Enterprise
-  #provisioner "shell" {
-  #  inline = [
-  #    "echo 'Downloading Splunk Enterprise ${var.splunk_version}...'",
-  #    "cd /tmp",
-  #    "wget -O splunk.tgz \"${var.splunk_wget_url}",
-  #    "echo 'Extracting Splunk Enterprise...'",
-  #    "sudo tar -xzf splunk.tgz -C /opt/",
-  #    "sudo chown -R splunk:splunk /opt/splunk",
-  #    "rm -f /tmp/splunk.tgz"
-  #  ]
-  #}
-
-  # Configure Splunk initial setup
-  #provisioner "shell" {
-  #  inline = [
-  #    "echo 'Configuring Splunk Enterprise...'",
-  #    "sudo -u splunk /opt/splunk/bin/splunk start --accept-license --answer-yes --no-prompt --seed-passwd changeme123",
-  #    "sudo -u splunk /opt/splunk/bin/splunk stop",
-  #    "echo 'Initial Splunk setup completed'"
-  #  ]
-  #}
-
-  # Create systemd service for Splunk
-  #provisioner "shell" {
-  #  inline = [
-  #    "echo 'Creating systemd service for Splunk...'",
-  #    "sudo /opt/splunk/bin/splunk enable boot-start -user splunk --accept-license",
-  #    "echo 'Splunk systemd service created'"
-  #  ]
-  #}
-
-  # Configure firewall for Splunk ports
-  #provisioner "shell" {
-  #  inline = [
-  #    "echo 'Configuring firewall for Splunk ports...'",
-  #    "sudo firewall-cmd --permanent --add-port=8000/tcp",
-  #    "sudo firewall-cmd --permanent --add-port=8089/tcp",
-  #    "sudo firewall-cmd --permanent --add-port=9997/tcp",
-  #    "sudo firewall-cmd --reload",
-  #    "echo 'Firewall configured for Splunk'"
-  #  ]
-  #}
-
-  # Create startup script for SSM session connectivity
-  #provisioner "shell" {
-  #  inline = [
-  #    "echo 'Creating SSM connectivity script...'",
-  #    "cat << 'EOF' | sudo tee /opt/ssm-setup.sh",
-  #    "#!/bin/bash",
-  #    "# Ensure SSM agent is running",
-  #    "systemctl start amazon-ssm-agent",
-  #    "systemctl enable amazon-ssm-agent",
-  #    "",
-  #    "# Set up session manager plugin prerequisites",
-  #    "echo 'SSM Agent Status:'",
-  #    "systemctl status amazon-ssm-agent --no-pager",
-  #    "EOF",
-  #    "sudo chmod +x /opt/ssm-setup.sh"
-  #  ]
-  #}
-
-  # Final system cleanup and optimization
-  provisioner "shell" {
-    inline = [
-      "echo 'Performing final system cleanup...'",
-      "sudo dnf clean all",
-      "sudo rm -rf /var/cache/dnf/*",
-      "sudo rm -rf /tmp/*",
-      "sudo rm -rf /var/tmp/*",
-      "history -c",
-      "echo 'System cleanup completed'"
+    script = "scripts/splunk_setup.sh"
+    environment_vars = [
+      "SPLUNK_VERSION=${var.splunk_version}",
+      "SPLUNK_WGET_URL=${var.splunk_wget_url}",
+      "TIMEZONE=UTC"
     ]
   }
 

@@ -88,11 +88,18 @@ terraform plan
 terraform apply
 ```
 
-3) Connect to the instance via SSM
+3) Connect to the instance(s) via SSM
 
 ```bash
+terraform output ssm_connect_commands
+# Example:
+# [
+#   "aws ssm start-session --target i-xxxxxxxx --region us-east-1",
+#   "aws ssm start-session --target i-yyyyyyyy --region us-east-1"
+# ]
+
+# Or just the first instance:
 terraform output ssm_connect_command
-# Example: aws ssm start-session --target i-xxxxxxxx --region us-east-1
 ```
 
 ## 🔧 Configuration Highlights
