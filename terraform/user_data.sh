@@ -30,7 +30,7 @@ systemctl status amazon-ssm-agent --no-pager
 echo "Setting up log rotation..."
 cat > /etc/logrotate.d/user-data << EOF
 /var/log/user-data.log {
-    daily
+    daily 
     missingok
     rotate 7
     compress

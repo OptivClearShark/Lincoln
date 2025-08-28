@@ -6,8 +6,8 @@ Build a Splunk-ready Amazon Linux 2023 AMI with Packer and deploy a secure AWS V
 
 ## ✨ What’s Inside
 
-- 🧰 Packer: Creates an AL2023 AMI with SSM Agent pre-installed (Splunk steps included but commented for opt-in).
-- 🏗️ Terraform: Provisions a VPC across 2 AZs, public/private subnets, IGW, NAT Gateways, IAM role/profile for SSM, security groups, and an EC2 instance in a private subnet.
+- 🧰 Packer: Builds an AL2023 AMI with SSM Agent and Splunk installed by default (override `splunk_wget_url` to disable). Root EBS for the AMI is 128 GB gp3.
+- 🏗️ Terraform: Provisions a VPC across 2 AZs, public/private subnets, IGW, NAT Gateways, IAM role/profile for SSM, security groups, and one or more EC2 instances in private subnets.
 - 🔐 Access: Connect via AWS Systems Manager Session Manager (through NAT — no public IPs required).
 
 ## 🗺️ Architecture (High Level)
@@ -55,7 +55,14 @@ SSM traffic from the private instance reaches AWS via the NAT Gateways.
     ├── iam.tf                  # SSM role + instance profile
     ├── ec2.tf                  # Private EC2 instance (SSM-enabled)
     ├── outputs.tf              # Useful outputs (incl. SSM command)
-    └── README.md               # Infra details and usage
+    └── user_data.sh            # Boots the instance and sets hostname
+```
+
+Additional build assets
+
+```
+packer/files/Splunkd.service     # Optional systemd unit for Splunk
+packer/scripts/splunk_setup.sh   # Consolidated Packer provisioner script
 ```
 
 ## ✅ Prerequisites
@@ -67,7 +74,7 @@ SSM traffic from the private instance reaches AWS via the NAT Gateways.
 
 ## ⚙️ Quickstart
 
-1) Optional: Build the AMI with Packer
+1) Build the AMI with Packer
 
 ```bash
 cd packer
@@ -77,7 +84,9 @@ packer build -var "region=us-east-1" splunk-al2023.pkr.hcl
 
 <img src="assets/vhs/packer.gif">
 
-Note: Splunk install steps are present but commented. Uncomment and adjust if you want the AMI to include Splunk out of the box.
+Notes:
+- Splunk is installed by default. To skip Splunk, pass an empty URL: `-var 'splunk_wget_url='`.
+- To pin a different Splunk version, set both `splunk_version` and `splunk_wget_url` accordingly.
 
 2) Deploy infrastructure with Terraform
 
@@ -104,10 +113,12 @@ terraform output ssm_connect_command
 
 ## 🔧 Configuration Highlights
 
-- AMI discovery: Looks up your latest Packer-built AMI by name pattern.
+- AMI discovery: Looks up your latest Packer-built AMI by name wildcard.
+- AMI root volume: 128 GB gp3 (encrypted), set at build time.
 - Subnets: Generated with `cidrsubnet` from the VPC CIDR.
 - EC2 hardening: IMDSv2 optional/required, optional detailed monitoring, optional termination protection, burst credit control for T-family.
-- Default tags: Set centrally in the provider; customize in `terraform/main.tf` and `terraform/variables.tf`.
+- Default tags: Set centrally in the provider.
+- Hostnames: `user_data.sh` sets the Linux hostname from the instance `Name` tag.
 
 ## 🛡️ Security Notes
 
