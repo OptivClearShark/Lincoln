@@ -1,1 +1,126 @@
-# Lincoln
+# Lincoln 🎩
+
+<img src="assets/lincoln_128.png">
+
+Build a Splunk-ready Amazon Linux 2023 AMI with Packer and deploy a secure AWS VPC with Terraform — complete with private subnets, NAT egress, and Session Manager access.
+
+## ✨ What’s Inside
+
+- 🧰 Packer: Creates an AL2023 AMI with SSM Agent pre-installed (Splunk steps included but commented for opt-in).
+- 🏗️ Terraform: Provisions a VPC across 2 AZs, public/private subnets, IGW, NAT Gateways, IAM role/profile for SSM, security groups, and an EC2 instance in a private subnet.
+- 🔐 Access: Connect via AWS Systems Manager Session Manager (through NAT — no public IPs required).
+
+## 🗺️ Architecture (High Level)
+
+```mermaid
+flowchart TD
+  Internet((Internet))
+  IGW[Internet Gateway]
+  NAT1[NAT Gateway AZ1]
+  NAT2[NAT Gateway AZ2]
+  subgraph VPC 10.0.0.0/16
+    subgraph Public Subnets
+      Pub1[Public Subnet AZ1]
+      Pub2[Public Subnet AZ2]
+    end
+    subgraph Private Subnets
+      Priv1[Private Subnet AZ1]
+      Priv2[Private Subnet AZ2]
+      EC2[EC2: Splunk Instance]
+    end
+  end
+  Internet --> IGW --> Pub1
+  IGW --> Pub2
+  Pub1 --> NAT1
+  Pub2 --> NAT2
+  Priv1 --> NAT1
+  Priv2 --> NAT2
+  EC2 --- Priv1
+```
+
+SSM traffic from the private instance reaches AWS via the NAT Gateways.
+
+## 📁 Repo Layout
+
+```
+.
+├── packer/
+│   └── splunk-al2023.pkr.hcl   # AL2023 AMI build (Splunk steps commented)
+└── terraform/
+    ├── main.tf                 # Provider + default tags
+    ├── variables.tf            # Inputs with validations and toggles
+    ├── data.tf                 # AMI lookup (matches Packer AMI)
+    ├── vpc.tf                  # VPC, subnets, routes, NAT
+    ├── sg.tf                   # Security groups
+    ├── iam.tf                  # SSM role + instance profile
+    ├── ec2.tf                  # Private EC2 instance (SSM-enabled)
+    ├── outputs.tf              # Useful outputs (incl. SSM command)
+    └── README.md               # Infra details and usage
+```
+
+## ✅ Prerequisites
+
+- AWS account and credentials configured (`aws sts get-caller-identity` works)
+- Terraform >= 1.6
+- Packer (if you plan to build the AMI)
+- AWS CLI + Session Manager plugin (for connecting via SSM)
+
+## ⚙️ Quickstart
+
+1) Optional: Build the AMI with Packer
+
+```bash
+cd packer
+packer init .
+packer build -var "region=us-east-1" splunk-al2023.pkr.hcl
+```
+
+Note: Splunk install steps are present but commented. Uncomment and adjust if you want the AMI to include Splunk out of the box.
+
+2) Deploy infrastructure with Terraform
+
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
+
+3) Connect to the instance via SSM
+
+```bash
+terraform output ssm_connect_command
+# Example: aws ssm start-session --target i-xxxxxxxx --region us-east-1
+```
+
+## 🔧 Configuration Highlights
+
+- AMI discovery: Looks up your latest Packer-built AMI by name pattern.
+- Subnets: Generated with `cidrsubnet` from the VPC CIDR.
+- EC2 hardening: IMDSv2 optional/required, optional detailed monitoring, optional termination protection, burst credit control for T-family.
+- Default tags: Set centrally in the provider; customize in `terraform/main.tf` and `terraform/variables.tf`.
+
+## 🛡️ Security Notes
+
+- Instances live in private subnets with no public IPs.
+- Session Manager provides shell access without inbound openings.
+- Root EBS volume uses encryption and GP3 by default.
+- To go fully private (no NAT), add SSM interface endpoints (ssm, ssmmessages, ec2messages) and remove NAT Gateways.
+
+## 💸 Cost Considerations
+
+- NAT Gateways incur hourly and data processing fees (x2 in this config).
+- Consider reducing to a single AZ for dev to cut costs.
+
+## 🧹 Cleanup
+
+```bash
+cd terraform
+terraform destroy
+```
+
+If you built AMIs with Packer, de-register AMIs and delete snapshots you no longer need.
+
+---
+
+Questions or ideas? Open an issue or tweak the variables and go! ✨
