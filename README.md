@@ -1,6 +1,6 @@
 # Lincoln 🎩
 
-<img src="assets/lincoln_128.png">
+<img src="assets/logos/lincoln_128.png">
 
 Build a Splunk-ready Amazon Linux 2023 AMI with Packer and deploy a secure AWS VPC with Terraform — complete with private subnets, NAT egress, and Session Manager access.
 
@@ -74,6 +74,8 @@ cd packer
 packer init .
 packer build -var "region=us-east-1" splunk-al2023.pkr.hcl
 ```
+
+<img src="assets/vhs/packer.gif">
 
 Note: Splunk install steps are present but commented. Uncomment and adjust if you want the AMI to include Splunk out of the box.
 
