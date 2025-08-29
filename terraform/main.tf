@@ -17,6 +17,8 @@ provider "aws" {
       Environment  = var.environment
       ManagedBy    = "terraform"
       TechnicalPOC = "Kevin Dorsey"
+      Interviewer  = var.interviewer
+      Interviewee  = "${var.interviewee_fn} ${var.interviewee_ln}"
     }
   }
 }

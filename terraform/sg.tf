@@ -13,8 +13,16 @@ resource "aws_security_group" "splunk_instance" {
     from_port   = 8000
     to_port     = 8000
     protocol    = "tcp"
-    cidr_blocks = [aws_vpc.main.cidr_block]
+    cidr_blocks = ["0.0.0.0/0"]
     description = "Splunk Web Interface"
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "SSH"
   }
 
   ingress {

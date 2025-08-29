@@ -93,3 +93,36 @@ variable "disable_api_termination" {
   type        = bool
   default     = false
 }
+
+## DNS for NLB (Route 53)
+variable "route53_zone_id" {
+  description = "Route 53 hosted zone ID for your domain (can include '/hostedzone/' prefix). Leave empty to skip record creation."
+  type        = string
+  default     = "/hostedzone/Z049435030NGGQM3AI8IC"
+}
+
+variable "domain" {
+  type    = string
+  default = "clearsharkworks.com"
+}
+
+variable "interviewer" {
+  description = "First and last name of O+CS interviewer"
+  type        = string
+}
+
+variable "interviewee_fn" {
+  description = "First name of interviewee"
+  type        = string
+}
+
+variable "interviewee_ln" {
+  description = "Last name of interviewee"
+  type        = string
+}
+
+variable "ssh_pw" {
+  description = "Password for interviewee's account"
+  type        = string
+  sensitive   = true
+}

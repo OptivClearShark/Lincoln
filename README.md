@@ -120,6 +120,25 @@ terraform output ssm_connect_command
 - Default tags: Set centrally in the provider.
 - Hostnames: `user_data.sh` sets the Linux hostname from the instance `Name` tag.
 
+## 🌐 Public Access (Temporary) via NLB
+
+This config includes an Internet-facing Network Load Balancer that exposes:
+- TCP/22 → SSH to private instances
+- TCP/8000 → Splunk Web UI
+
+Notes:
+- Instances remain in private subnets without public IPs; the NLB sits in public subnets.
+- NLB preserves client IP; the instance security group allows 0.0.0.0/0 for ports 22 and 8000 (intended for temporary access).
+- Use the NLB DNS name from outputs, or create a CNAME in your domain (e.g., at your registrar) pointing to it.
+
+Outputs to use:
+
+```bash
+terraform output nlb_dns_name
+terraform output ssh_via_nlb_example
+terraform output splunk_web_url
+```
+
 ## 🛡️ Security Notes
 
 - Instances live in private subnets with no public IPs.

@@ -26,6 +26,19 @@ sleep 30
 echo "SSM Agent status:"
 systemctl status amazon-ssm-agent --no-pager
 
+# Enable password authentication for SSH
+sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config 
+sudo systemctl reload sshd
+
+# Create interviewee user
+USERNAME="${username}"
+USERPASS="${password}"
+sudo adduser $USERNAME
+sudo read -s USERPASS
+sudo echo "$USERNAME:$USERPASS" | sudo chpasswd
+sudo unset USERPASS
+sudo usermod -aG wheel $USERNAME
+
 # Configure log rotation for user data log
 echo "Setting up log rotation..."
 cat > /etc/logrotate.d/user-data << EOF
