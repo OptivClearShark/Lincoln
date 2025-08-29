@@ -53,8 +53,10 @@ SSM traffic from the private instance reaches AWS via the NAT Gateways.
     ├── vpc.tf                  # VPC, subnets, routes, NAT
     ├── sg.tf                   # Security groups
     ├── iam.tf                  # SSM role + instance profile
-    ├── ec2.tf                  # Private EC2 instance (SSM-enabled)
-    ├── outputs.tf              # Useful outputs (incl. SSM command)
+    ├── ec2.tf                  # Private EC2 instance(s) (SSM-enabled)
+    ├── nlb.tf                  # Internet-facing NLB (TCP 22/8000) + target groups
+    ├── dns.tf                  # Route 53 alias A records to the NLB
+    ├── outputs.tf              # Useful outputs (incl. SSM and NLB)
     └── user_data.sh            # Boots the instance and sets hostname
 ```
 
@@ -119,6 +121,7 @@ terraform output ssm_connect_command
 - EC2 hardening: IMDSv2 optional/required, optional detailed monitoring, optional termination protection, burst credit control for T-family.
 - Default tags: Set centrally in the provider.
 - Hostnames: `user_data.sh` sets the Linux hostname from the instance `Name` tag.
+- Remote state: Terraform state stores in S3 bucket `lincoln-tfstate` (backend in `main.tf`). Ensure this bucket exists in `us-east-1` before `terraform init`.
 
 ## 🌐 Public Access (Temporary) via NLB
 
@@ -129,7 +132,7 @@ This config includes an Internet-facing Network Load Balancer that exposes:
 Notes:
 - Instances remain in private subnets without public IPs; the NLB sits in public subnets.
 - NLB preserves client IP; the instance security group allows 0.0.0.0/0 for ports 22 and 8000 (intended for temporary access).
-- Use the NLB DNS name from outputs, or create a CNAME in your domain (e.g., at your registrar) pointing to it.
+- Route 53 alias A records can be created automatically (see `dns.tf`), using your hosted zone. Alternatively, use the NLB DNS name directly or create CNAMEs at your current DNS provider.
 
 Outputs to use:
 
@@ -137,6 +140,8 @@ Outputs to use:
 terraform output nlb_dns_name
 terraform output ssh_via_nlb_example
 terraform output splunk_web_url
+terraform output ssh_fqdn
+terraform output splunk_fqdn
 ```
 
 ## 🛡️ Security Notes
