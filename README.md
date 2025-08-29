@@ -2,6 +2,9 @@
 
 <img src="assets/logos/lincoln_128.png">
 
+> [!CAUTION]
+This is a project under active development. It is _not done_. You have been warned.
+
 Build a Splunk-ready Amazon Linux 2023 AMI with Packer and deploy a secure AWS VPC with Terraform — complete with private subnets, NAT egress, and Session Manager access.
 
 ## ✨ What’s Inside
