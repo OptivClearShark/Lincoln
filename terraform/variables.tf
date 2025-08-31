@@ -44,12 +44,22 @@ variable "vpc_cidr" {
   }
 }
 
-variable "instance_type" {
+variable "sh_instance_type" {
   description = "EC2 instance type for Splunk server"
   type        = string
   default     = "t3.large"
   validation {
-    condition     = can(regex("^[a-z0-9]+\\.[a-z0-9]+$", var.instance_type))
+    condition     = can(regex("^[a-z0-9]+\\.[a-z0-9]+$", var.sh_instance_type))
+    error_message = "instance_type must look like 't3.large'."
+  }
+}
+
+variable "idx_instance_type" {
+  description = "EC2 instance type for Splunk server"
+  type        = string
+  default     = "t3.large"
+  validation {
+    condition     = can(regex("^[a-z0-9]+\\.[a-z0-9]+$", var.idx_instance_type))
     error_message = "instance_type must look like 't3.large'."
   }
 }
