@@ -1,6 +1,7 @@
-resource "aws_instance" "searchhead" {
+resource "aws_instance" "indexer" {
   ami                     = data.aws_ami.splunk_ami.id
-  instance_type           = var.instance_type
+  instance_type           = var.idx_instance_type
+  count                   = 4
   subnet_id               = aws_subnet.private[0].id
   vpc_security_group_ids  = [aws_security_group.splunk_instance.id]
   iam_instance_profile    = aws_iam_instance_profile.ssm_profile.name
@@ -32,6 +33,6 @@ resource "aws_instance" "searchhead" {
   }
 
   tags = {
-    Name = "${var.project_name}-${lower("${substr(var.interviewee_fn, 0, 1)}${substr(var.interviewee_ln, 0, 1)}")}-searchhead-01"
+    Name = "${var.project_name}-${lower("${substr(var.interviewee_fn, 0, 1)}${substr(var.interviewee_ln, 0, 1)}")}-indexer-${format("%02d", count.index + 1)}"
   }
 }
