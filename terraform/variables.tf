@@ -119,20 +119,24 @@ variable "domain" {
 variable "interviewer" {
   description = "First and last name of O+CS interviewer"
   type        = string
+  default     = ""
 }
 
 variable "interviewee_fn" {
   description = "First name of interviewee"
   type        = string
+  default     = ""
 }
 
 variable "interviewee_ln" {
   description = "Last name of interviewee"
   type        = string
+  default     = ""
 }
 
 variable "ssh_pw" {
   description = "Password for interviewee's account"
   type        = string
   sensitive   = true
+  default     = ""
 }

@@ -27,6 +27,21 @@ variable "splunk_wget_url" {
   default = "https://download.splunk.com/products/splunk/releases/9.4.4/linux/splunk-9.4.4-f627d88b766b-linux-amd64.tgz"
 }
 
+variable "iam_instance_profile" {
+  type    = string
+  default = "lincoln-packer-ssm-profile"
+}
+
+variable "secret_id" {
+  type    = string
+  default = ""
+}
+
+variable "secret_dest" {
+  type    = string
+  default = ""
+}
+
 locals {
   timestamp = regex_replace(timestamp(), "[- TZ:]", "")
   date      = formatdate("YYYY.MM.DD - hhmm", timestamp())
@@ -41,9 +56,10 @@ locals {
 }
 
 source "amazon-ebs" "al2023-splunk" {
-  ami_name      = "al2023-splunk-${var.splunk_version}-${local.date}"
-  instance_type = var.instance_type
-  region        = var.region
+  ami_name             = "al2023-splunk-${var.splunk_version}-${local.date}"
+  instance_type        = var.instance_type
+  region               = var.region
+  iam_instance_profile = var.iam_instance_profile
 
   source_ami_filter {
     filters = {
@@ -91,9 +107,12 @@ build {
   provisioner "shell" {
     script = "scripts/splunk_setup.sh"
     environment_vars = [
+      "AWS_DEFAULT_REGION={{ .BuildRegion }}",
       "SPLUNK_VERSION=${var.splunk_version}",
       "SPLUNK_WGET_URL=${var.splunk_wget_url}",
-      "TIMEZONE=UTC"
+      "TIMEZONE=UTC",
+      "SECRET_ID=${var.secret_id}",
+      "SECRET_DEST=${var.secret_dest}"
     ]
   }
 
